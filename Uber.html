@@ -1,0 +1,65 @@
+import pandas as pd
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+# Load the dataset
+df = pd.read_csv("uber_price_dataset.csv")
+# Features and target
+X = df.drop("Predicted_Price", axis=1)
+y = df["Predicted_Price"]
+
+# Scale features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Train/test split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+# XGBoost Regressor
+model = xgb.XGBRegressor()
+model.fit(X_train, y_train)
+XGBRegressor(base_score=0.5, booster='gbtree', callbacks=None,
+             colsample_bylevel=1, colsample_bynode=1, colsample_bytree=1,
+             early_stopping_rounds=None, enable_categorical=False,
+             eval_metric=None, gamma=0, gpu_id=-1, grow_policy='depthwise',
+             importance_type=None, interaction_constraints='',
+             learning_rate=0.300000012, max_bin=256, max_cat_to_onehot=4,
+             max_delta_step=0, max_depth=6, max_leaves=0, min_child_weight=1,
+             missing=nan, monotone_constraints='()', n_estimators=100, n_jobs=0,
+             num_parallel_tree=1, predictor='auto', random_state=0, reg_alpha=0,
+             reg_lambda=1, ...)
+# Predict on test data
+y_pred = model.predict(X_test)
+
+# Evaluate
+print("R² Score:", r2_score(y_test, y_pred))
+print("RMSE:", np.sqrt(mean_squared_error(y_test, y_pred)))
+R² Score: 0.9834551243643261
+RMSE: 5.071200535377194
+# ==== Predict using user input ====
+def predict_price():
+    print("\n--- Predict Uber Price ---")
+    num_cars = float(input("Enter number of cars available: "))
+    distance = float(input("Enter distance to travel (km): "))
+    traffic = float(input("Enter traffic value (1 to 10): "))
+
+    # Format user input
+    user_data = pd.DataFrame([[num_cars, distance, traffic]],
+                             columns=["Num_Cars_Available", "Distance_to_Travel", "Traffic_Value"])
+
+    # Scale user input
+    user_scaled = scaler.transform(user_data)
+
+    # Predict price
+    price = model.predict(user_scaled)[0]
+    print(f"\n Predicted Uber Price: ₹{price:.2f}")
+
+# Call prediction
+predict_price()
+--- Predict Uber Price ---
+Enter number of cars available: 2
+Enter distance to travel (km): 5
+Enter traffic value (1 to 10): 4
+
+ Predicted Uber Price: ₹56.56
